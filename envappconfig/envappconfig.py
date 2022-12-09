@@ -1,7 +1,9 @@
 from collections import OrderedDict
+from copy import copy
 from typing import Any, Callable, Optional
 
 import os
+import sys
 
 def apply_prefix(prefix: Optional[str], name: str) -> str:
     return f'{prefix}_{name}'.upper() if prefix else name
@@ -58,6 +60,7 @@ class EnvAppConfig:
         help: str='Description not provided',
         translate=str,
     ) -> None:
+        self.configure_called = False
         name = name.strip()
 
         if name in self.envs:
@@ -67,9 +70,31 @@ class EnvAppConfig:
         self.full_names.add(full_name)
         self.envs[name] = Env(full_name, required, default, help, translate)
 
+    def __getattr__(self, name):
+        if not self.configure_called:
+            raise EnvAppConfigException('configure() needs to be called before config values are available')
+
+        if name not in self.confs:
+            raise AttributeError(f'{name} not available in config')
+
+        return self.confs[name]
+
+    def asdict(self):
+        if not self.configure_called:
+            raise EnvAppConfigException('configure() needs to be called before config values are available')
+
+        return copy(self.conf)
+
     def configure(self, environ=os.environ) -> None:
         for name, env in self.envs:
-            self.confs[name] = env.configure(environ)
+            try:
+                self.confs[name] = env.configure(environ)
+            except EnvAppConfigException:
+                print(f'Error: {env.name} not available in environment\n')
+                self.usage()
+                sys.exit(1)
+
+        self.configure_called = True
 
     def usage(self) -> None:
         print('usage:\n')
