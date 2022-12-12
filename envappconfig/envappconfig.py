@@ -1,15 +1,17 @@
 from collections import OrderedDict
 from copy import copy
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Dict, Iterable, Optional, Union
 
 import os
 import sys
+
+from .exceptions import EnvAppConfigException
 
 def apply_prefix(prefix: Optional[str], name: str) -> str:
     return f'{prefix}_{name}'.upper() if prefix else name
 
 def longest_str_len(strings: Iterable) -> int:
-    return max([len(s) for s in strings])
+    return max(len(s) for s in strings)
 
 class Env:
     def __init__(
@@ -17,7 +19,7 @@ class Env:
         name: str,
         required: bool,
         default: Optional[Any],
-        help: str,
+        help: str,  # pylint: disable=redefined-builtin
         translate: Callable,
     ) -> None:
         self.name = name
@@ -28,16 +30,16 @@ class Env:
 
     def configure(self, environ) -> Any:
         if self.name not in environ and self.default:
-            return default
+            return self.default
 
         if self.name not in environ:
-            raise EnvAppConfigException(f'{name} not in environment')
+            raise EnvAppConfigException(f'{self.name} not in environment')
 
         return self.translate(environ[self.name])
 
-    def usage(self, indent: int=1, longest: int=0) -> None:
+    def usage(self, indent: int, longest: int) -> None:  # pylint: disable=unused-argument
         indent_str = ' ' * indent
-        print(f'{indent_str}{self.name:<longest} {self.description}')
+        print(f'{indent_str}{self.name:<longest} {self.help}')
 
 
 class EnvAppConfig:
@@ -46,6 +48,7 @@ class EnvAppConfig:
         prefix: Optional[str]=None,
         description: Optional[str]=None,
     ) -> None:
+        self.configure_called = False
         self.prefix = prefix.strip() if type(prefix) is str else None
         self.description = description.strip() if type(description) is str else None
         self.full_names = set()
@@ -57,7 +60,7 @@ class EnvAppConfig:
         name: str,
         required: bool=False,
         default: Optional[Any]=None,
-        help: str='Description not provided',
+        help: str='Description not provided',  # pylint: disable=redefined-builtin
         translate=str,
     ) -> None:
         self.configure_called = False
@@ -85,7 +88,10 @@ class EnvAppConfig:
 
         return copy(self.conf)
 
-    def configure(self, environ=os.environ) -> None:
+    def configure(self, environ: Optional[Union[os._Environ, Dict[str, str]]]=None) -> None:
+        if environ is None:
+            environ = os.environ
+
         for name, env in self.envs:
             try:
                 self.confs[name] = env.configure(environ)
@@ -100,13 +106,15 @@ class EnvAppConfig:
         print('usage:\n')
 
         if self.description:
-            print(f'{description}\n')
+            print(f'{self.description}\n')
 
         if len(self.envs.keys()) > 0:
             print('Config Environment Variables:')
 
+        longest_name_len = longest_str_len(self.full_names)
+
         for env in self.envs.values():
-            env.usage(indent=1, longest=longest_str_len(self.full_names))
+            env.usage(1, longest_name_len)
 
     def add_conf(self, name: str, value: Any) -> None:
         name = name.strip()
