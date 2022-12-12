@@ -120,3 +120,13 @@ def test_usage_when_not_exists(mocker):
     config.configure({'BAR': '1'})
     envappconfig.EnvAppConfig.usage.assert_called_once()
     sys.exit.assert_called_once_with(1)
+
+def test_bad_transform(mocker):
+    config = envappconfig.EnvAppConfig()
+    config.add_env('foo', transform=int)
+    mocker.patch('envappconfig.EnvAppConfig.usage')
+
+    with pytest.raises(ValueError):
+        config.configure({'FOO': 'abc'})
+
+    envappconfig.EnvAppConfig.usage.assert_called_once()

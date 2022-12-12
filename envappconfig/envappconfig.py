@@ -26,6 +26,9 @@ class Env:
         self.help = help
         self.transform = transform
 
+    def raw_value(self, environ) -> str:
+        return environ[self.name]
+
     def configure(self, environ) -> Any:
         if self.name not in environ and self.default:
             return self.default
@@ -95,6 +98,10 @@ class EnvAppConfig:
                 print(f'Error: {env.name} not available in environment\n')
                 self.usage()
                 sys.exit(1)
+            except Exception:
+                print(f'Error while trying transform {env.name} value "{env.raw_value(environ)}"')
+                self.usage()
+                raise
 
         self.configure_called = True
 

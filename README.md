@@ -2,6 +2,13 @@
 
 envappconfig is intended to provide simple configuration via environment variables, in the same spirit as argparse.
 
+Features:
+* Autogenerates usage output if an environment variable is missing
+* Default settings for missing environment variables
+* Functions that transform the environment variable string to the value you need
+* Environment variable prefixes
+* Optional dictionary of the config
+
 ## Basic example
 
 ```python
