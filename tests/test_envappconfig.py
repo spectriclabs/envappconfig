@@ -16,6 +16,12 @@ def test_basic_configure():
     assert config.foo == 1
     assert config.bar == 'baz'
 
+def test_custom_transform():
+    config = envappconfig.EnvAppConfig()
+    config.add_env('foo', transform=lambda x: int(x) + 2)
+    config.configure({'FOO': 1})
+    assert config.foo == 3
+
 def test_envappconfig_prefix():
     config = envappconfig.EnvAppConfig(prefix='someproj')
     config.add_env('foo', transform=int)
