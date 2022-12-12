@@ -3,7 +3,9 @@ name = "envappconfig"
 version = "0.0.1"
 description = "Simple app configuration via environment variables, in the spirit of argparse."
 authors = ["Spectric Labs <foss@spectric.com>"]
-license = "MIT"
+license = "Apache-2.0"
+readme = "README.md"
+homepage = "https://github.com/spectriclabs/envappconfig"
 
 [tool.poetry.dependencies]
 python = "^3.6"
