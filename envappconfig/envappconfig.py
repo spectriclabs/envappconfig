@@ -17,13 +17,11 @@ class Env:
     def __init__(
         self,
         name: str,
-        required: bool,
         default: Optional[Any],
         help: str,  # pylint: disable=redefined-builtin
         transform: Callable,
     ) -> None:
         self.name = name
-        self.required = required
         self.default = default
         self.help = help
         self.transform = transform
@@ -57,7 +55,6 @@ class EnvAppConfig:
     def add_env(
         self,
         name: str,
-        required: bool=False,
         default: Optional[Any]=None,
         help: str='Description not provided',  # pylint: disable=redefined-builtin
         transform=str,
@@ -66,11 +63,11 @@ class EnvAppConfig:
         name = name.strip()
 
         if name in self.envs:
-            raise EnvAppConfigException(f'{name} already specified in EnvAppConfig')
+            raise EnvAppConfigException(f'{name} specified more than once in EnvAppConfig')
 
         full_name = apply_prefix(self.prefix, name)
         self.full_names.add(full_name)
-        self.envs[name] = Env(full_name, required, default, help, transform)
+        self.envs[name] = Env(full_name, default, help, transform)
 
     def __getattr__(self, name):
         if not self.configure_called:
