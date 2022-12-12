@@ -8,7 +8,7 @@ import sys
 from .exceptions import EnvAppConfigException
 
 def apply_prefix(prefix: Optional[str], name: str) -> str:
-    return f'{prefix}_{name}'.upper() if prefix else name
+    return f'{prefix}_{name}'.upper() if prefix else name.upper()
 
 def longest_str_len(strings: Iterable) -> int:
     return max(len(s) for s in strings)
@@ -20,13 +20,13 @@ class Env:
         required: bool,
         default: Optional[Any],
         help: str,  # pylint: disable=redefined-builtin
-        translate: Callable,
+        transform: Callable,
     ) -> None:
         self.name = name
         self.required = required
         self.default = default
         self.help = help
-        self.translate = translate
+        self.transform = transform
 
     def configure(self, environ) -> Any:
         if self.name not in environ and self.default:
@@ -35,12 +35,11 @@ class Env:
         if self.name not in environ:
             raise EnvAppConfigException(f'{self.name} not in environment')
 
-        return self.translate(environ[self.name])
+        return self.transform(environ[self.name])
 
-    def usage(self, indent: int, longest: int) -> None:  # pylint: disable=unused-argument
+    def usage(self, indent: int, longest: int) -> None:
         indent_str = ' ' * indent
-        print(f'{indent_str}{self.name:<longest} {self.help}')
-
+        print(f'{indent_str}{self.name.ljust(longest)} - {self.help}')
 
 class EnvAppConfig:
     def __init__(
@@ -61,7 +60,7 @@ class EnvAppConfig:
         required: bool=False,
         default: Optional[Any]=None,
         help: str='Description not provided',  # pylint: disable=redefined-builtin
-        translate=str,
+        transform=str,
     ) -> None:
         self.configure_called = False
         name = name.strip()
@@ -71,7 +70,7 @@ class EnvAppConfig:
 
         full_name = apply_prefix(self.prefix, name)
         self.full_names.add(full_name)
-        self.envs[name] = Env(full_name, required, default, help, translate)
+        self.envs[name] = Env(full_name, required, default, help, transform)
 
     def __getattr__(self, name):
         if not self.configure_called:
@@ -86,13 +85,13 @@ class EnvAppConfig:
         if not self.configure_called:
             raise EnvAppConfigException('configure() needs to be called before config values are available')
 
-        return copy(self.conf)
+        return copy(self.confs)
 
     def configure(self, environ: Optional[Union[os._Environ, Dict[str, str]]]=None) -> None:
         if environ is None:
             environ = os.environ
 
-        for name, env in self.envs:
+        for name, env in self.envs.items():
             try:
                 self.confs[name] = env.configure(environ)
             except EnvAppConfigException:

@@ -21,20 +21,23 @@ disable = "too-many-nested-blocks,too-many-branches,too-many-statements,R0801,R0
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py39,py310
+envlist = py36,py39,py310
 isolated_build = true
 recreate = true
 [gh-actions]
 python =
-	3.9: py39
-	3.10: py310
+  3.6: py36
+  3.9: py39
+  3.10: py310
 [testenv]
 deps =
   pylint
-	flake8
-	pytest
+  flake8
+  pytest
+  pytest-cov
+  pytest-mock
 commands =
-	flake8 --select E201,E202,E231,E262,E265 envappconfig
-	pylint envappconfig
-	pytest -s
+  flake8 --select E201,E202,E231,E262,E265 envappconfig
+  pylint envappconfig
+  pytest --cov-report term-missing --cov=envappconfig
 """
