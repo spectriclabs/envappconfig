@@ -54,7 +54,7 @@ config.mirror
 The `transform` parameter can be used to specify normal transforms, like `int` or `float` (the default is `str`), but it can also take custom transform functions.  The transform function must take a single parameter, which will be filled in with the string value from the environment variable.
 
 ```python
-config = EnvAppConfig(prefix='MYAPP', description='Amazing app')
+config = EnvAppConfig(description='Amazing app')
 
 # Double the timeout specified in the TIMEOUT environment variable,
 # or default to 60.

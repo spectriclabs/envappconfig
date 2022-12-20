@@ -47,6 +47,24 @@ def test_default():
     assert config.foo == 2
     assert config.bar == 'baz'
 
+def test_usage_display_default(capfd):
+    config = envappconfig.EnvAppConfig()
+    config.add_env('foo', default=2)
+    config.usage()
+    out, err = capfd.readouterr()
+    assert '(default=2)' in out
+
+def test_missing_envs(capfd, mocker):
+    mocker.patch('sys.exit')
+    config = envappconfig.EnvAppConfig()
+    config.add_env('foo')
+    config.add_env('bar')
+    config.configure({})
+    out, err = capfd.readouterr()
+    assert 'Error: FOO' in out
+    assert 'Error: BAR' in out
+    sys.exit.assert_called_once_with(1)
+
 def test_default_overridden():
     config = envappconfig.EnvAppConfig()
     config.add_env('foo', default=2, transform=int)

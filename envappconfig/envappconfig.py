@@ -38,9 +38,15 @@ class Env:
 
         return self.transform(environ[self.name])
 
+    def default_text(self) -> str:
+        if self.default is None:
+            return ''
+
+        return f' (default={self.default})'
+
     def usage(self, indent: int, longest: int) -> None:
         indent_str = ' ' * indent
-        print(f'{indent_str}{self.name.ljust(longest)} - {self.help}')
+        print(f'{indent_str}{self.name.ljust(longest)} - {self.help}{self.default_text()}')
 
 class EnvAppConfig:
     def __init__(
@@ -91,22 +97,27 @@ class EnvAppConfig:
         if environ is None:
             environ = os.environ
 
+        is_missing_envs = False
+
         for name, env in self.envs.items():
             try:
                 self.confs[name] = env.configure(environ)
             except EnvAppConfigException:
-                print(f'Error: {env.name} not available in environment\n')
-                self.usage()
-                sys.exit(1)
+                print(f'Error: {env.name} not available in environment')
+                is_missing_envs = True
             except Exception:
                 print(f'Error while trying transform {env.name} value "{env.raw_value(environ)}"')
                 self.usage()
                 raise
 
+        if is_missing_envs:
+            self.usage()
+            sys.exit(1)
+
         self.configure_called = True
 
     def usage(self) -> None:
-        print('usage:\n')
+        print('\nusage:\n')
 
         if self.description:
             print(f'{self.description}\n')
