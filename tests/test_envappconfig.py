@@ -4,6 +4,14 @@ import pytest
 
 import envappconfig
 
+def test_valid_name():
+    assert envappconfig.valid_name('foo') == True
+    assert envappconfig.valid_name('abc123') == True
+    assert envappconfig.valid_name('the_quick_brown_fox') == True
+    assert envappconfig.valid_name('_test') == False
+    assert envappconfig.valid_name('1fail') == False
+    assert envappconfig.valid_name('this or that') == False
+
 def test_envappconfig_desc():
     config = envappconfig.EnvAppConfig(description='Builds a config from environment variables')
     assert config.description is not None
@@ -79,6 +87,22 @@ def test_duplicate_envs():
     with pytest.raises(envappconfig.EnvAppConfigException):
         config.add_env('foo')
         config.add_env('foo')
+
+def test_existing_attribute():
+    config = envappconfig.EnvAppConfig()
+
+    with pytest.raises(envappconfig.EnvAppConfigException):
+        config.add_env('configure')
+
+def test_invalid_name():
+    config = envappconfig.EnvAppConfig()
+
+    with pytest.raises(envappconfig.EnvAppConfigException):
+        config.add_env('1fail')
+
+def test_invalid_prefix():
+    with pytest.raises(envappconfig.EnvAppConfigException):
+        envappconfig.EnvAppConfig(prefix='_invalid')
 
 def test_configure_not_called_for_getattr():
     config = envappconfig.EnvAppConfig()

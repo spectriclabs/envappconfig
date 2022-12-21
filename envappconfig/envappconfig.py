@@ -3,15 +3,24 @@ from copy import copy
 from typing import Any, Callable, Dict, Iterable, Optional, Union
 
 import os
+import re
 import sys
 
 from .exceptions import EnvAppConfigException
+
+NAME_PATTERN = re.compile('[A-Za-z]+[A-Za-z0-9_]*')
 
 def apply_prefix(prefix: Optional[str], name: str) -> str:
     return f'{prefix}_{name}'.upper() if prefix else name.upper()
 
 def longest_str_len(strings: Iterable) -> int:
     return max(len(s) for s in strings)
+
+def valid_name(name: str) -> bool:
+    if NAME_PATTERN.fullmatch(name) is None:
+        return False
+
+    return True
 
 class Env:
     def __init__(
@@ -61,6 +70,9 @@ class EnvAppConfig:
         self.envs = OrderedDict()
         self.confs = {}
 
+        if self.prefix is not None and not valid_name(self.prefix):
+            raise EnvAppConfigException(f'{self.prefix} is not a valid prefix')
+
     def add_env(
         self,
         name: str,
@@ -69,7 +81,15 @@ class EnvAppConfig:
         transform=str,
     ) -> None:
         self.configure_called = False
-        name = name.strip()
+        name = name.strip().lower()
+
+        # Can't use hasattr(self, name) here because it will call __getattr__(),
+        # which raises an exception if configure() hasn't been called yet.
+        if name in ('add_conf', 'add_env', 'asdict', 'configure', 'usage'):
+            raise EnvAppConfigException(f'{name} is already an attribute of EnvAppConfig')
+
+        if not valid_name(name):
+            raise EnvAppConfigException(f'{name} is not a valid environment variable name')
 
         if name in self.envs:
             raise EnvAppConfigException(f'{name} specified more than once in EnvAppConfig')
