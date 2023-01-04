@@ -94,6 +94,9 @@ def test_existing_attribute():
     with pytest.raises(envappconfig.EnvAppConfigException):
         config.add_env('configure')
 
+    with pytest.raises(envappconfig.EnvAppConfigException):
+        config.add_conf('configure', 1)
+
 def test_invalid_name():
     config = envappconfig.EnvAppConfig()
 

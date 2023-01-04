@@ -63,6 +63,7 @@ class EnvAppConfig:
         prefix: Optional[str]=None,
         description: Optional[str]=None,
     ) -> None:
+        self.existing_attributes = ('add_conf', 'add_env', 'asdict', 'configure', 'usage')
         self.configure_called = False
         self.prefix = prefix.strip() if type(prefix) is str else None
         self.description = description.strip() if type(description) is str else None
@@ -85,14 +86,14 @@ class EnvAppConfig:
 
         # Can't use hasattr(self, name) here because it will call __getattr__(),
         # which raises an exception if configure() hasn't been called yet.
-        if name in ('add_conf', 'add_env', 'asdict', 'configure', 'usage'):
+        if name in self.existing_attributes:
             raise EnvAppConfigException(f'{name} is already an attribute of EnvAppConfig')
 
         if not valid_name(name):
             raise EnvAppConfigException(f'{name} is not a valid environment variable name')
 
-        if name in self.envs:
-            raise EnvAppConfigException(f'{name} specified more than once in EnvAppConfig')
+        if name in self.envs or name in self.confs:
+            raise EnvAppConfigException(f'{name} already specified in EnvAppConfig')
 
         full_name = apply_prefix(self.prefix, name)
         self.full_names.add(full_name)
@@ -152,6 +153,11 @@ class EnvAppConfig:
 
     def add_conf(self, name: str, value: Any) -> None:
         name = name.strip()
+
+        # Can't use hasattr(self, name) here because it will call __getattr__(),
+        # which raises an exception if configure() hasn't been called yet.
+        if name in self.existing_attributes:
+            raise EnvAppConfigException(f'{name} is already an attribute of EnvAppConfig')
 
         if name in self.envs or name in self.confs:
             raise EnvAppConfigException(f'{name} already specified in EnvAppConfig')
