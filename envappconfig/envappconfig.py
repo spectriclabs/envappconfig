@@ -1,5 +1,5 @@
+from argparse import Namespace
 from collections import OrderedDict
-from copy import copy
 from typing import Any, Callable, Dict, Iterable, Optional, Union
 
 import os
@@ -63,13 +63,10 @@ class EnvAppConfig:
         prefix: Optional[str]=None,
         description: Optional[str]=None,
     ) -> None:
-        self.existing_attributes = ('add_conf', 'add_env', 'asdict', 'configure', 'usage')
-        self.configure_called = False
         self.prefix = prefix.strip() if type(prefix) is str else None
         self.description = description.strip() if type(description) is str else None
         self.full_names = set()
         self.envs = OrderedDict()
-        self.confs = {}
 
         if self.prefix is not None and not valid_name(self.prefix):
             raise EnvAppConfigException(f'{self.prefix} is not a valid prefix')
@@ -81,48 +78,28 @@ class EnvAppConfig:
         help: str='Description not provided',  # pylint: disable=redefined-builtin
         transform=str,
     ) -> None:
-        self.configure_called = False
         name = name.strip().lower()
-
-        # Can't use hasattr(self, name) here because it will call __getattr__(),
-        # which raises an exception if configure() hasn't been called yet.
-        if name in self.existing_attributes:
-            raise EnvAppConfigException(f'{name} is already an attribute of EnvAppConfig')
 
         if not valid_name(name):
             raise EnvAppConfigException(f'{name} is not a valid environment variable name')
 
-        if name in self.envs or name in self.confs:
+        if name in self.envs:
             raise EnvAppConfigException(f'{name} already specified in EnvAppConfig')
 
         full_name = apply_prefix(self.prefix, name)
         self.full_names.add(full_name)
         self.envs[name] = Env(full_name, default, help, transform)
 
-    def __getattr__(self, name):
-        if not self.configure_called:
-            raise EnvAppConfigException('configure() needs to be called before config values are available')
-
-        if name not in self.confs:
-            raise AttributeError(f'{name} not available in config')
-
-        return self.confs[name]
-
-    def asdict(self):
-        if not self.configure_called:
-            raise EnvAppConfigException('configure() needs to be called before config values are available')
-
-        return copy(self.confs)
-
-    def configure(self, environ: Optional[Union[os._Environ, Dict[str, str]]]=None) -> None:
+    def configure(self, environ: Optional[Union[os._Environ, Dict[str, str]]]=None) -> Namespace:
         if environ is None:
             environ = os.environ
 
         is_missing_envs = False
+        confs = {}
 
         for name, env in self.envs.items():
             try:
-                self.confs[name] = env.configure(environ)
+                confs[name] = env.configure(environ)
             except EnvAppConfigException:
                 print(f'Error: {env.name} not available in environment')
                 is_missing_envs = True
@@ -135,7 +112,7 @@ class EnvAppConfig:
             self.usage()
             sys.exit(1)
 
-        self.configure_called = True
+        return Namespace(**confs)
 
     def usage(self) -> None:
         print('\nusage:\n')
@@ -150,16 +127,3 @@ class EnvAppConfig:
 
         for env in self.envs.values():
             env.usage(1, longest_name_len)
-
-    def add_conf(self, name: str, value: Any) -> None:
-        name = name.strip()
-
-        # Can't use hasattr(self, name) here because it will call __getattr__(),
-        # which raises an exception if configure() hasn't been called yet.
-        if name in self.existing_attributes:
-            raise EnvAppConfigException(f'{name} is already an attribute of EnvAppConfig')
-
-        if name in self.envs or name in self.confs:
-            raise EnvAppConfigException(f'{name} already specified in EnvAppConfig')
-
-        self.confs[name] = value
