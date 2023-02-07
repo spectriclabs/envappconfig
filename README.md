@@ -1,11 +1,11 @@
 # envappconfig
 
-envappconfig is intended to provide simple configuration via environment variables, in the same spirit as argparse.
+envappconfig is intended to provide simple configuration via environment variables, in the same spirit as argparse, which can be useful when developing and deploying [12-factor apps](https://12factor.net).
 
 Features:
 * Autogenerates usage output if an environment variable is missing
 * Default settings for missing environment variables
-* Functions that transform the environment variable string to the value you need
+* Functions that transform the environment variable string to the value type you need
 * Environment variable prefixes
 
 ## Basic example
@@ -23,7 +23,8 @@ config = env.configure()
 config.port
 
 # Returns MIRROR from os.environ,
-# or displays usage if MIRROR does not exist, then exits.
+# or displays usage at env.configure()
+# if MIRROR does not exist, then exits.
 config.mirror
 ```
 
@@ -44,7 +45,8 @@ config = env.configure()
 config.port
 
 # Returns MYAPP_MIRROR from os.environ,
-# or displays usage if MYAPP_MIRROR does not exist, then exits.
+# or displays usage at env.configure()
+# if MYAPP_MIRROR does not exist, then exits.
 config.mirror
 ```
 
@@ -76,4 +78,37 @@ config.listen = f'{config.bind}:{config.port}'
 
 # Returns the combined bind:port string.
 config.listen
+```
+
+## Command Line
+
+There are a couple options for using envappconfig at the command line (eg. when testing).
+
+### Prefix
+
+If you've only got a couple environment variables to set, just put them before the command:
+
+```sh
+PORT=9999 NAME=foo python3 script_using_envappconfig.py
+```
+
+### dotenv
+
+If you have more environment variables to set, consider using `dotenv`.  First put your environment variables in a file named `.env`:
+
+```sh
+PORT=9999
+NAME=foo
+```
+
+Then call `dotenv` as follows, which will load up the variables from `.env` for this command:
+
+```sh
+dotenv run -- python3 script_using_envappconfig.py
+```
+
+You can install the `dotenv` command line tool with:
+
+```sh
+python3 -m pip install "python-dotenv[cli]"
 ```
