@@ -72,6 +72,15 @@ def test_default_overridden():
     assert config.foo == 10
     assert config.bar == 'baz'
 
+def test_default_is_false():
+    env = envappconfig.EnvAppConfig()
+    env.add_env('foo', default=False, transform=lambda x: x.lower() != 'false')
+    config = env.configure()
+    assert config.foo == False
+
+    config = env.configure({'FOO': 'true'})
+    assert config.foo == True
+
 def test_duplicate_envs():
     env = envappconfig.EnvAppConfig()
 

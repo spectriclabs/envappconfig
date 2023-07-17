@@ -39,7 +39,7 @@ class Env:
         return environ[self.name]
 
     def configure(self, environ) -> Any:
-        if self.name not in environ and self.default:
+        if self.name not in environ and self.default is not None:
             return self.default
 
         if self.name not in environ:
