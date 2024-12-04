@@ -93,7 +93,7 @@ or in Kubernetes:
 ```yaml
 env:
   - name: ENVAPPCONFIG_SHOW_USAGE
-	  value: "1"
+    value: "1"
 ```
 
 ## Command Line
