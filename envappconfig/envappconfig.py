@@ -94,6 +94,10 @@ class EnvAppConfig:
         if environ is None:
             environ = os.environ
 
+        if 'ENVAPPCONFIG_SHOW_USAGE' in environ:
+            self.usage()
+            sys.exit(0)
+
         is_missing_envs = False
         confs = {}
 

@@ -112,6 +112,15 @@ def test_display_usage():
     env.add_env('boom', help='kabam')
     env.usage()
 
+def test_force_display_usage(mocker):
+    env = envappconfig.EnvAppConfig()
+    env.add_env('foo')
+    mocker.patch('envappconfig.EnvAppConfig.usage')
+    mocker.patch('sys.exit')
+    config = env.configure({'FOO': '1', 'ENVAPPCONFIG_SHOW_USAGE': 'anything'})
+    envappconfig.EnvAppConfig.usage.assert_called_once()
+    sys.exit.assert_called_once_with(0)
+
 def test_use_os_environ():
     env = envappconfig.EnvAppConfig()
     env.add_env('foo', default=1, transform=int)

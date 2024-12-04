@@ -80,6 +80,22 @@ config.listen = f'{config.bind}:{config.port}'
 config.listen
 ```
 
+## Forcing usage display
+
+The environment variable usage output for an app can be forced by defining the `ENVAPPCONFIG_SHOW_USAGE` environment variable to any value.  This is basically like `--help` for apps that take command line parameters.  Forcing usage display can be useful when you've got a pre-built container for an app that uses envappconfig, and you need to see all the environment variable options.  For example:
+
+```sh
+docker run -it --rm -e ENVAPPCONFIG_SHOW_USAGE=1 amazing:latest
+```
+
+or in Kubernetes:
+
+```yaml
+env:
+  - name: ENVAPPCONFIG_SHOW_USAGE
+	  value: "1"
+```
+
 ## Command Line
 
 There are a couple options for using envappconfig at the command line (eg. when testing).
